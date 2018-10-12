@@ -1,5 +1,7 @@
 package aiinterface;
 
+import exporter.ExportManager;
+import exporter.Exporter;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,6 +22,8 @@ public class AIController extends Thread {
 	 * AIに実装すべきメソッドを定義するインタフェース．
 	 */
 	private AIInterface ai;
+
+	private Exporter exporter;
 
 	/**
 	 * The character's side flag.<br>
@@ -66,6 +70,7 @@ public class AIController extends Thread {
 	 */
 	public AIController(AIInterface ai) {
 		this.ai = ai;
+		this.exporter = ExportManager.getExporter();
 	}
 
 	/**
@@ -92,6 +97,7 @@ public class AIController extends Thread {
 //		while(!isInit)
 //		try{
 			this.ai.initialize(gameData, playerNumber);
+			this.exporter.init();
 //			isInit = true;
 //		} catch (Py4JException e) {
 //			Logger.getAnonymousLogger().log(Level.SEVERE, "Cannot Initialize AI");
@@ -111,13 +117,23 @@ public class AIController extends Thread {
 				}
 			}
 
+			FrameData currentFrameData =
+				!this.framesData.isEmpty() ? this.framesData.removeFirst() : new FrameData();
+
+			if(isValidForExport(currentFrameData)) {
+				this.exporter.exportFrameData(currentFrameData);
+			}
+
 			this.ai.getInformation(!this.framesData.isEmpty() ? this.framesData.removeFirst() : new FrameData());
 			this.ai.getScreenData(this.screenData);
 			this.ai.processing();
 			setInput(this.ai.input());
 			ThreadController.getInstance().notifyEndProcess(this.playerNumber);
 		}
+	}
 
+	private boolean isValidForExport(FrameData frameData) {
+		return !frameData.getEmptyFlag() && frameData.getRemainingTimeMilliseconds() > 0;
 	}
 
 	/**
@@ -209,6 +225,7 @@ public class AIController extends Thread {
 		this.isFighting = false;
 		synchronized (this.waitObj) {
 			this.ai.close();
+			this.exporter.close();
 			this.waitObj.notifyAll();
 		}
 	}

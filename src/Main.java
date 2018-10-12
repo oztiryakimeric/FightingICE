@@ -1,4 +1,6 @@
 import core.Game;
+import exporter.ActionExporter;
+import exporter.ExportManager;
 import manager.DisplayManager;
 
 /**
@@ -14,6 +16,8 @@ public class Main {
 	 *            起動時に入力した全ての引数を格納した配列
 	 */
 	public static void main(String[] options) {
+		ExportManager.setExporter(new ActionExporter());
+
 		Game game = new Game();
 		game.setOptions(options);
 		DisplayManager displayManager = new DisplayManager();
